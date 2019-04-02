@@ -1,0 +1,22 @@
+.a
+*.bin
+*.map
+*.png
+*.log
+*.elf
+*.d
+*.bak
+*.orig
+*.txt
+*.DS_Store
+
+/Debug*
+/Release*
+/GPRS Debug
+/Ethernet Debug
+/GPRS Release
+/Ethernet Release
+/Image
+/SRC/apps/tasks/taskSerial_UART2.c
+/SRC/version.h
+/version.h

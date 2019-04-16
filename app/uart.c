@@ -54,6 +54,13 @@ uint8_t _getbyte(void)
 
 }
 
+int getbytes(uint8_t *data,int len)
+{
+	for (int i = 0; i < len; ++i) {
+		data[i] = _getbyte();
+	}
+}
+
 int _isempty(void)
 {
 	uint8_t ch = -1;
@@ -68,4 +75,9 @@ int _isempty(void)
 void uart_send(const char *str)
 {
 	CDC_Transmit_FS(str,strlen(str));
+}
+
+void uart_send_bytes(uint8_t *bytes,int len)
+{
+	CDC_Transmit_FS(bytes,len);
 }

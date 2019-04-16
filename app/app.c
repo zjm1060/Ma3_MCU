@@ -41,12 +41,17 @@ static frame_t result;
 
 void appSend(void *args);
 
-osThreadDef(sendTask, appSend, osPriorityNormal, 0, 128);
+osThreadDef(sendTask, appSend, osPriorityHigh, 0, 128);
 
-//void startRun(void)
-//{
-//	xSemaphoreGive(xSendStart);
-//}
+static void lock(void)
+{
+	taskENTER_CRITICAL();
+}
+
+static void unlock(void)
+{
+	taskEXIT_CRITICAL();
+}
 
 void recvFrame(void)
 {
@@ -106,7 +111,7 @@ void StartDefaultTask(void const * argument)
 
   xSendQueue = xQueueCreate(128,sizeof(void *));
 
-  line_init((void *)0x38000000);
+  line_init((void *)0x38000000,lock,unlock);
 
   osThreadCreate(osThread(sendTask), NULL);
 

@@ -15,7 +15,7 @@ typedef struct{
 	uint8_t bitmaps[1500];
 }line_t;
 
-void line_init(void *ptr);
+void line_init(void *ptr,void (*lock)(),void (*unlock)());
 line_t *getLine(void);
 void freeLine(void *l);
 

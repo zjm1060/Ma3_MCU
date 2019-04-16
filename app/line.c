@@ -23,8 +23,14 @@ typedef struct __line_pool{
 static line_pool_t *pool_free_list;
 static line_pool_t *line_pool;
 
-void line_init(void *ptr)
+static void (*_lock)();
+static void (*_unlock)();
+
+void line_init(void *ptr,void (*lock)(),void (*unlock)())
 {
+	_lock = lock;
+	_unlock = unlock;
+
 	line_pool = ptr;
 	pool_free_list = line_pool;
 
@@ -41,10 +47,13 @@ void line_init(void *ptr)
 line_t *getLine(void)
 {
 	line_t *l = NULL;
+
+	_lock();
 	if(pool_free_list){
 		l = &pool_free_list->line;
 		pool_free_list = pool_free_list->next;
 	}
+	_unlock();
 
 	return l;
 }
@@ -53,6 +62,9 @@ void freeLine(void *l)
 {
 	line_pool_t *p = container_of(l,line_pool_t,line);
 
+	_lock();
 	p->next = pool_free_list;
 	pool_free_list = p;
+	_unlock();
+
 }

@@ -21,15 +21,15 @@ typedef struct{
 	uint32_t compression;
 }bmp_ctx;
 
-typedef union{
-	struct{
-		uint8_t r,g,b;
-	};
-	uint32_t Monochrome;
-}tColor;
+//typedef union{
+//	struct{
+//		uint8_t b,g,r,a;
+//	}c;
+//	uint32_t Monochrome;
+//}tColor;
 
 int getBmpHeader(void *h, bmp_ctx *ctx);
 int getBmpInfo(void *inf, bmp_ctx *ctx);
-tColor getBmpColor(bmp_ctx *ctx, uint8_t *dp, int start_line,int lines);
+void getBmpColor(bmp_ctx *ctx, uint8_t *dp, int start_line,int lines);
 
 #endif /* BMP_H_ */

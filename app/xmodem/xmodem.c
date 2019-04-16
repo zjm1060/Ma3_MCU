@@ -33,7 +33,7 @@
      void _outbyte(int c);
 
  */
-
+#include <stdint.h>
 #include "crc16.h"
 
 #define SOH  0x01
@@ -47,6 +47,8 @@
 #define DLY_1S 400
 #define MAXRETRANS 25
 #define TRANSMIT_XMODEM_1K
+
+void startRun(void);
 
 static int check(int crc, const unsigned char *buf, int sz)
 {
@@ -71,11 +73,11 @@ static int check(int crc, const unsigned char *buf, int sz)
 
 static void flushinput(void)
 {
-	while (_inbyte(((DLY_1S)*3)>>1) >= 0)
+	while (_inbyte((DLY_1S)>>1) >= 0)
 		;
 }
 
-int xmodemReceive(unsigned char *dest, int destsz)
+int xmodemReceive(unsigned char *dest, int destsz,uint32_t *recvLen)
 {
 	unsigned char xbuff[1030]; /* 1024 for XModem 1k + 3 head chars + 2 crc + nul */
 	unsigned char *p;
@@ -88,13 +90,15 @@ int xmodemReceive(unsigned char *dest, int destsz)
 	for(;;) {
 		for( retry = 0; ; ++retry) {
 			if (trychar) _outbyte(trychar);
-			if ((c = _inbyte((DLY_1S)<<1)) >= 0) {
+			if ((c = _inbyte((100))) >= 0) {
 				switch (c) {
 				case SOH:
 					bufsz = 128;
+//					startRun();
 					goto start_recv;
 				case STX:
 					bufsz = 1024;
+//					startRun();
 					goto start_recv;
 				case EOT:
 					flushinput();
@@ -120,7 +124,11 @@ int xmodemReceive(unsigned char *dest, int destsz)
 		return -2; /* sync error */
 
 	start_recv:
-		if (trychar == 'C') crc = 1;
+
+		if (trychar == 'C') {
+			startRun();
+			crc = 1;
+		}
 		trychar = 0;
 		p = xbuff;
 		*p++ = c;
@@ -138,6 +146,7 @@ int xmodemReceive(unsigned char *dest, int destsz)
 				if (count > 0) {
 					memcpy (&dest[len], &xbuff[3], count);
 					len += count;
+					*recvLen = len;
 				}
 				++packetno;
 				retrans = MAXRETRANS+1;

@@ -7,6 +7,8 @@
 #include <string.h>
 #include "bmp.h"
 
+#define GrayLimte	(200)
+
 #define __PACKED __attribute__((__packed__))
 
 typedef struct
@@ -18,11 +20,16 @@ typedef struct
 }__PACKED bmp_header;
 
 typedef struct{
-	uint8_t r;
-	uint8_t g;
 	uint8_t b;
+	uint8_t g;
+	uint8_t r;
 	uint8_t q;
 }__PACKED color_tab;
+
+typedef union{
+	color_tab c;
+	uint32_t color;
+}tColor;
 
 typedef struct bmp_info
 {
@@ -96,19 +103,110 @@ int getBmpMonochrome(bmp_ctx *ctx, int x, int y)
 
 }
 
-tColor getBmpColor(bmp_ctx *ctx, uint8_t *dp, int start_line, int lines)
+#define toGray(c)	(((c)->r*76 + (c)->g*150 + (c)->b*30) >> 8)
+
+void getBmpColor(bmp_ctx *ctx, uint8_t *dp, int start_line, int lines)
 {
 	int byte_in_line = 0;
 	int offset_in_line = 0;
+	uint8_t *line = NULL;
 	switch(ctx->bits){
 		case 1:{
-			uint8_t *line = NULL;
 			byte_in_line = ctx->width>>3;
 			for (int i = 0; i < lines; ++i) {
 				line = (uint8_t *)(((uint8_t *)ctx->bmp_data)+((start_line+i)*byte_in_line));
 				memcpy(dp,line,byte_in_line);
 			}
 		}break;
+		case 4:{
+			color_tab *tab = ctx->color_tab;
+			tColor c;
+			int m;
+			uint8_t byte = 0;
+			int bitCount = 7;
+
+			byte_in_line = ctx->width>>1;
+
+			for (int i = 0; i < lines; ++i) {
+				line = (uint8_t *)(((uint8_t *)ctx->bmp_data)+((start_line+i)*byte_in_line));
+				for (int x = 0; x < byte_in_line; ++x) {
+					uint8_t index = line[x]>>4;
+					c.c = tab[index];
+					m = toGray(&c.c);
+					if(m > GrayLimte)byte |= (1<<bitCount);
+					bitCount --;
+					index = line[x]&0xf;
+					c.c = tab[index];
+					m = toGray(&c.c);
+					if(m > GrayLimte)byte |= (1<<bitCount);
+					bitCount --;
+
+					if(bitCount <= 0){
+						*dp = byte;
+						dp ++;
+						byte = 0;
+						bitCount = 7;
+					}
+				}
+			}
+
+		}break;
+		case 8:{
+			byte_in_line = ctx->width;
+			color_tab *tab = ctx->color_tab;
+			int m;
+			tColor c;
+			uint8_t byte = 0;
+			int bitCount = 7;
+
+			for (int i = 0; i < lines; ++i) {
+				line = (uint8_t *)(((uint8_t *)ctx->bmp_data)+((start_line+i)*byte_in_line));
+				for (int x = 0; x < byte_in_line; ++x) {
+					uint8_t index = line[x];
+					c.c = tab[index];
+					m = toGray(&c.c);
+					if(m > GrayLimte)byte |= (1<<bitCount);
+					bitCount --;
+
+					if(bitCount < 0){
+						*dp = byte;
+						dp ++;
+						byte = 0;
+						bitCount = 7;
+					}
+				}
+			}
+		}break;
+		case 16:{
+			byte_in_line = ctx->width>>1;
+
+		}break;
+		case 24:{
+			byte_in_line = ctx->width*3;
+			int m;
+			tColor c;
+			uint8_t byte = 0;
+			int bitCount = 7;
+
+			for (int i = 0; i < lines; ++i) {
+				line = (uint8_t *)(((uint8_t *)ctx->bmp_data)+((start_line+i)*byte_in_line));
+				for (int x = 0; x < byte_in_line; x+=3) {
+					c.c.b = line[x+0];
+					c.c.g = line[x+1];
+					c.c.r = line[x+2];
+					m = toGray(&c.c);
+					if(m > GrayLimte)byte |= (1<<bitCount);
+					bitCount --;
+
+					if(bitCount < 0){
+						*dp = byte;
+						dp ++;
+						byte = 0;
+						bitCount = 7;
+					}
+				}
+			}
+		}
 		default:
 			break;
 	}

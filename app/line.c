@@ -8,7 +8,7 @@
 #include <string.h>
 #include "line.h"
 
-#define LINE_POOL_SIZE (32)
+#define LINE_POOL_SIZE (16)		// 16*3200 = 51200 bytes
 
 //#define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #define container_of(ptr, type, member) ({			\

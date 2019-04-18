@@ -12,7 +12,7 @@
 
 typedef struct{
 	uint32_t bits;
-	uint8_t bitmaps[1500];
+	uint8_t bitmaps[3200];	// 25600 bits
 }line_t;
 
 void line_init(void *ptr,void (*lock)(),void (*unlock)());

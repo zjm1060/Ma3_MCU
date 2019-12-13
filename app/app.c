@@ -166,8 +166,15 @@ void appSend(void *args)
 
 	while(1){
 		line_t *line;
+		int length;
 
 		xQueueReceive(xSendQueue, &line, portMAX_DELAY) ;
+
+		length = line->bits>>3;
+
+		for (int i = 0; i < length; ++i) {
+			line->bitmaps[i] ^= 0xFF;
+		}
 
 		spi_send(line->bitmaps,line->bits);
 

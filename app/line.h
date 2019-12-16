@@ -11,7 +11,13 @@
 #include <stdint.h>
 
 typedef struct{
-	uint32_t bits;
+	union{
+		struct{
+			uint32_t bits:24;
+			uint32_t delay:8;
+		};
+		uint32_t byte;
+	};
 	uint8_t bitmaps[3200];	// 25600 bits
 }line_t;
 

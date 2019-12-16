@@ -68,7 +68,7 @@ void recvFrame(void)
 				case FRAME_CMD_DATA:{
 					line_t *line = getLine();
 					if(line){
-						getbytes(&line->bits,sizeof(line->bits));
+						getbytes(&line->byte,sizeof(line->byte));
 						if((line->bits>>3) > 1500){
 							result.h = FRAME_HEADER;
 							result.ack = FRAME_RESULT_ERR;
@@ -180,7 +180,7 @@ void appSend(void *args)
 
 		freeLine(line);
 
-		osDelay(10);
+		osDelay((10+line->delay));
 
 		while(0);
 	}

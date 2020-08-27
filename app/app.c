@@ -1,7 +1,7 @@
 /*
  * app.c
  *
- *  Created on: 2019Äê4ÔÂ2ÈÕ
+ *  Created on: 2019ï¿½ï¿½4ï¿½ï¿½2ï¿½ï¿½
  *      Author: zjm09
  */
 #include "FreeRTOS.h"
@@ -176,11 +176,16 @@ void appSend(void *args)
 			line->bitmaps[i] ^= 0xFF;
 		}
 
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
+
 		spi_send(line->bitmaps,line->bits);
+		osDelay(2);
+
+		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
 
 		freeLine(line);
 
-		osDelay((10+line->delay));
+		osDelay((8+line->delay));
 
 		while(0);
 	}

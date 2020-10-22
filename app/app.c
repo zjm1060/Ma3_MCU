@@ -28,6 +28,7 @@ typedef struct{
 //	line_t data;
 }frame_t;
 
+int _inbyte(unsigned short timeout);
 void spi_send(uint8_t *dp,int len);
 int xmodemReceive(unsigned char *dest, int destsz,uint32_t *recvLen);
 
@@ -58,13 +59,18 @@ void recvFrame(void)
 	uint8_t c;
 
 	while(1){
+//		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,0);
 		getbytes(&c,1);
 		HAL_GPIO_WritePin(LED_GPIO_Port,LED_Pin,1);
+//		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);
 
 		if(c == FRAME_HEADER){
 			getbytes(&c,1);
 			switch(c){
+				default:
+					while (_inbyte(2) >= 0);
+					break;
 				case FRAME_CMD_DATA:{
 					line_t *line = getLine();
 					if(line){
@@ -83,7 +89,7 @@ void recvFrame(void)
 						result.ack = FRAME_RESULT_ACK;
 						uart_send_bytes(&result,sizeof(result));
 					}else{
-						while (_inbyte((100>>1)) >= 0);
+						while (_inbyte(2) >= 0);
 						result.h = FRAME_HEADER;
 						result.ack = FRAME_RESULT_NAK;
 						uart_send_bytes(&result,sizeof(result));
@@ -96,6 +102,8 @@ void recvFrame(void)
 					uart_send_bytes(&result,sizeof(result));
 				}break;
 			}
+		}else{
+			while (_inbyte(2) >= 0);
 		}
 	}
 }
@@ -176,16 +184,18 @@ void appSend(void *args)
 			line->bitmaps[i] ^= 0xFF;
 		}
 
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_RESET);
 
 		spi_send(line->bitmaps,line->bits);
 		osDelay(2);
 
 		HAL_GPIO_WritePin(GPIOA, GPIO_PIN_15, GPIO_PIN_SET);
-
-		freeLine(line);
+		HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, GPIO_PIN_RESET);
 
 		osDelay((8+line->delay));
+
+		freeLine(line);
 
 		while(0);
 	}
